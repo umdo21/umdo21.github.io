@@ -12,7 +12,7 @@
     :root {
       --bg-color: #F8FAFC;
       --card-bg: #FFFFFF;
-      --primary: #4F46E5;       /* 클래스업 느낌의 트렌디한 인디고 블루 */
+      --primary: #4F46E5;       
       --primary-light: #EEF2F6;
       --text-main: #1E293B;
       --text-muted: #64748B;
@@ -34,7 +34,6 @@
       margin: 0 auto;
     }
 
-    /* 클래스업 스타일의 깔끔한 대시보드 헤더 */
     .dashboard-header {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -70,6 +69,7 @@
       padding: 12px 24px;
       border-radius: 12px;
       text-align: center;
+      min-width: 100px;
     }
 
     .stat-label {
@@ -85,7 +85,6 @@
       color: var(--primary);
     }
 
-    /* 리스트 디자인 (격자 및 라인 형태) */
     .verse-grid {
       display: flex;
       flex-direction: column;
@@ -121,7 +120,12 @@
       color: var(--text-main);
     }
 
-    /* 심플하고 직관적인 버튼 */
+    .list-btn-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
     .btn {
       font-family: inherit;
       font-size: 15px;
@@ -151,10 +155,12 @@
       gap: 6px;
       color: var(--success);
       font-weight: 600;
-      font-size: 16px;
+      font-size: 15px;
+      background: #E6F4EA;
+      padding: 10px 18px;
+      border-radius: 8px;
     }
 
-    /* 모달창 디자인 리팩토링 */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -226,10 +232,12 @@
 
     .feedback-area {
       margin-top: 25px;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 600;
       min-height: 50px;
       color: var(--text-muted);
+      text-align: center;
+      line-height: 1.6;
     }
 
     .loading-spinner {
@@ -277,7 +285,7 @@
       
       <div class="action-group">
         <button class="btn" id="lang-toggle-btn" onclick="toggleLanguage()">🇬🇧 영어로 변경</button>
-        <button class="btn btn-primary" id="record-btn" onclick="startRecording()">🎤 암송 녹음하기</button>
+        <button class="btn btn-primary" id="record-btn" onclick="startRecording()">🎤 암송 녹음 시작하기</button>
       </div>
       
       <div class="feedback-area" id="feedback-msg"></div>
@@ -285,7 +293,7 @@
   </div>
 
   <script>
-    // 제안해주신 실제 구글 앱스 스크립트 웹앱 URL 연동
+    // 새 배포를 통해 얻으신 정확한 URL 적용
     const API_URL = 'https://script.google.com/macros/s/AKfycbx508eKSjf0YgxaQ_rfah_X34uW92vKy4JNwqJQR726mzXdujzrg2RY7JYSmIYyI86irw/exec';
     
     let versesData = [];
@@ -293,7 +301,6 @@
     let isEnglish = false;
     let recognition;
 
-    // 아이 맞춤형 파트너 축하 피드백 멘트
     const cheers = [
       "최고야! 오늘 말씀도 완벽하게 마음속에 저장 완료! 🌟",
       "와, 발음도 훌륭한걸? 예수님이 정말 기뻐하시겠어! 🎉",
@@ -319,6 +326,7 @@
       setupSpeechRecognition();
     }
 
+    // 리스트 영역 개편: 말씀보기 상시 오픈, 암송 완료 상태 구분
     function renderList() {
       const container = document.getElementById('verse-list-container');
       container.innerHTML = '';
@@ -331,24 +339,48 @@
             <div class="day-tag">${verse.day}</div>
             <div class="ref-text">${verse.reference}</div>
           </div>
-          <div>
+          <div class="list-btn-group">
+            <button class="btn" onclick="openModal(${verse.id}, 'view')">📖 말씀보기</button>
             ${verse.isCompleted 
-              ? `<div class="status-badge"><span>✓</span> 완료</div>` 
-              : `<button class="btn btn-primary" onclick="openModal(${verse.id})">암송하기</button>`}
+              ? `<div class="status-badge">✓ 완료</div>` 
+              : `<button class="btn btn-primary" onclick="openModal(${verse.id}, 'record')">🎤 암송하기</button>`}
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    function openModal(id) {
+    // 모달 오픈 로직: 'view'(말씀보기)와 'record'(암송하기) 분리
+    function openModal(id, mode) {
       currentVerse = versesData.find(v => v.id === id);
       isEnglish = false;
+      
       document.getElementById('modal-day').innerText = currentVerse.day;
       document.getElementById('modal-ref').innerText = currentVerse.reference;
-      document.getElementById('modal-verse').innerText = currentVerse.korean;
-      document.getElementById('lang-toggle-btn').innerText = "🇬🇧 영어로 변경";
-      document.getElementById('feedback-msg').innerText = "";
+      
+      const verseBox = document.getElementById('modal-verse');
+      const langBtn = document.getElementById('lang-toggle-btn');
+      const recordBtn = document.getElementById('record-btn');
+      const feedbackMsg = document.getElementById('feedback-msg');
+
+      feedbackMsg.innerText = "";
+
+      if (mode === 'view') {
+        // 1. 말씀보기 모드: 글자와 변환 버튼만 제공
+        verseBox.style.display = 'flex';
+        verseBox.innerText = currentVerse.korean;
+        langBtn.style.display = 'inline-block';
+        langBtn.innerText = "🇬🇧 영어로 변경";
+        recordBtn.style.display = 'none';
+      } else if (mode === 'record') {
+        // 2. 암송하기 모드: 컨닝 방지를 위해 글자를 완전히 숨기고 녹음 버튼만 노출
+        verseBox.style.display = 'none';
+        langBtn.style.display = 'none';
+        recordBtn.style.display = 'inline-block';
+        feedbackMsg.style.color = "var(--text-muted)";
+        feedbackMsg.innerText = "마음속으로 말씀을 준비한 뒤\n[암송 녹음 시작하기] 버튼을 눌러주세요! 💬";
+      }
+
       document.getElementById('verse-modal').style.display = 'flex';
     }
 
@@ -374,7 +406,7 @@
     function setupSpeechRecognition() {
       window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!window.SpeechRecognition) {
-        alert("아이패드의 Safari 혹은 Chrome 브라우저에서 마이크 사용을 허용해 주세요!");
+        alert("마이크 권한을 허용해 주시거나 사파리/크롬 브라우저를 이용해 주세요!");
         return;
       }
       recognition = new SpeechRecognition();
@@ -383,7 +415,7 @@
       recognition.onresult = function(event) {
         const spokenText = event.results[0][0].transcript;
         document.getElementById('feedback-msg').style.color = "var(--text-main)";
-        document.getElementById('feedback-msg').innerText = "내가 말한 내용: " + spokenText;
+        document.getElementById('feedback-msg').innerText = "내가 암송한 내용:\n\"" + spokenText + "\"";
         checkAccuracy(spokenText);
       };
       
@@ -394,13 +426,13 @@
 
     function startRecording() {
       recognition.lang = isEnglish ? 'en-US' : 'ko-KR';
-      document.getElementById('feedback-msg').innerText = "귀 기울여 듣고 있어요... 말씀 시작! 🎙️";
+      // 버튼을 누른 시점에 메시지 변경 요구 반영
+      document.getElementById('feedback-msg').innerText = "귀 기울여 들을게요! 말씀해 주세요... ❤️";
       recognition.start();
     }
 
     function checkAccuracy(spokenText) {
       const targetText = isEnglish ? currentVerse.english : currentVerse.korean;
-      
       const cleanSpoken = spokenText.replace(/[.,!?]/g, '').split(' ');
       const cleanTarget = targetText.replace(/[.,!?]/g, '').split(' ');
       
@@ -417,19 +449,15 @@
         sendCompletionToSheet();
       } else {
         document.getElementById('feedback-msg').style.color = "#EF4444";
-        document.getElementById('feedback-msg').innerText += `\n(일치율 ${Math.round(accuracy)}%) 아쉽게 커트라인을 못 넘었어요. 조금만 더 또박또박 읽어볼까요?`;
+        document.getElementById('feedback-msg').innerText += `\n\n(일치율 ${Math.round(accuracy)}%) 아쉽게 커트라인을 못 넘었어요. 조금만 더 또박또박 읽어볼까요?`;
       }
     }
 
-    // 구글 시트에 완료 처리 전송
     async function sendCompletionToSheet() {
-      document.getElementById('feedback-msg').innerText = "참 잘했어요! 저장 중... 💾";
-      
-      // 꽃가루 효과 연출
+      document.getElementById('feedback-msg').innerText = "참 잘했어요! 완료 기록을 저장 중... 💾";
       confetti({ particleCount: 120, spread: 60, origin: { y: 0.6 } });
 
       try {
-        // 구글 웹앱에 완료 상태 전달 (CORS 우회를 위해 no-cors 모드로 전송할 수 있습니다)
         await fetch(API_URL, {
           method: 'POST',
           mode: 'no-cors',
@@ -437,8 +465,9 @@
           body: JSON.stringify({ id: currentVerse.id })
         });
         
-        // 화면 즉시 갱신
         currentVerse.isCompleted = true;
+        currentVerse.lastStudyDate = new Date().toISOString(); // 동적 연속 학습일 계산용 임시 반영
+        
         const randomCheer = cheers[Math.floor(Math.random() * cheers.length)];
         document.getElementById('feedback-msg').style.color = "var(--success)";
         document.getElementById('feedback-msg').innerText = randomCheer;
@@ -451,7 +480,6 @@
 
       } catch (error) {
         console.error("전송 실패: ", error);
-        // 네트워크 에러가 나더라도 클라이언트단에서 완료처리 유도
         currentVerse.isCompleted = true;
         closeModal();
         renderList();
@@ -459,16 +487,65 @@
       }
     }
 
+    // 캘린더 날짜 기반 연속 학습일(Streak) 알고리즘 적용
     function updateStats() {
-      const completedCount = versesData.filter(v => v.isCompleted).length;
-      const progress = versesData.length ? Math.round((completedCount / versesData.length) * 100) : 0;
+      const completedVerses = versesData.filter(v => v.isCompleted);
+      
+      // 1. 진도율 계산
+      const progress = versesData.length ? Math.round((completedVerses.length / versesData.length) * 100) : 0;
       document.getElementById('progress-text').innerText = `${progress}%`;
       
-      // 예시용 연속 학습일 (구글 시트 연동 후 동적 계산 가능)
-      document.getElementById('streak-text').innerText = completedCount > 0 ? `${completedCount}일째` : '0일째';
+      // 2. 실제 수행한 날짜 기반 연속 학습 카운트 계산
+      if (completedVerses.length === 0) {
+        document.getElementById('streak-text').innerText = '0일째';
+        return;
+      }
+
+      // 학습일 데이터를 YYYY-MM-DD 문자열로 추출하여 중복 제거 및 정렬
+      const studyDates = completedVerses
+        .filter(v => v.lastStudyDate)
+        .map(v => {
+          const d = new Date(v.lastStudyDate);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        });
+      
+      const uniqueDates = Array.from(new Set(studyDates)).sort().reverse(); // 최신 날짜순 정렬
+      
+      if (uniqueDates.length === 0) {
+        document.getElementById('streak-text').innerText = '1일째';
+        return;
+      }
+
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+      // 오늘이나 어제 기록이 없다면 연속 기록 깨짐 -> 0일 처리
+      if (uniqueDates[0] !== todayStr && uniqueDates[0] !== yesterdayStr) {
+        document.getElementById('streak-text').innerText = '0일째';
+        return;
+      }
+
+      let streak = 0;
+      let checkDate = uniqueDates[0] === todayStr ? today : yesterday;
+
+      // 과거로 하루씩 내려가며 날짜가 연속되는지 역추적
+      while (true) {
+        const checkStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
+        if (uniqueDates.includes(checkStr)) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1); // 하루 전으로 변경
+        } else {
+          break;
+        }
+      }
+
+      document.getElementById('streak-text').innerText = `${streak}일째`;
     }
 
-    // 웹페이지 시작 시 구글 시트에서 데이터를 받아옵니다.
     window.onload = loadData;
   </script>
 </body>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>기적의 초등영어 파트너</title>
+  
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --primary: #3B82F6; /* 영어 서비스에 어울리는 스마트 블루 */
+      --primary-light: #EFF6FF;
+      --text-main: #1E293B;
+      --text-muted: #64748B;
+      --success: #10B981;
+      --border: #E2E8F0;
+      --danger: #EF4444;
+    }
+
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background-color: var(--bg-color);
+      margin: 0;
+      padding: 20px;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* 클래스업 스타일의 대시보드 (모바일 대응 반응형) */
+    .dashboard-header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .dashboard-title h1 { margin: 0 0 6px 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .dashboard-title p { margin: 0; color: var(--text-muted); font-size: 15px; }
+
+    .stats-container { display: flex; gap: 12px; width: 100%; }
+    
+    @media (min-width: 600px) {
+      .stats-container { width: auto; }
+      body { padding: 40px 20px; }
+      .dashboard-title h1 { font-size: 28px; }
+    }
+
+    .stat-box {
+      background: var(--primary-light);
+      padding: 12px 16px;
+      border-radius: 12px;
+      text-align: center;
+      flex: 1;
+      min-width: 90px;
+    }
+
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+    .stat-value { font-size: 18px; font-weight: 700; color: var(--primary); }
+
+    /* 리스트 디자인 */
+    .sentence-grid { display: flex; flex-direction: column; gap: 12px; }
+
+    .sentence-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sentence-card:hover { border-color: var(--primary); }
+
+    .sentence-info .day-tag { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+    .sentence-info .ref-text { font-size: 17px; font-weight: 600; color: var(--text-main); }
+
+    .list-btn-group { display: flex; gap: 8px; align-items: center; width: 100%; justify-content: flex-end; }
+    @media (min-width: 600px) { .list-btn-group { width: auto; } }
+
+    .btn {
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--card-bg); color: var(--text-main); cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: #F1F5F9; }
+    .btn-primary { background: var(--primary); color: white; border: none; }
+    .btn-primary:hover { background: #2563EB; }
+    .btn-reset { border-color: var(--border); color: var(--text-muted); font-size: 16px; padding: 8px 12px; }
+    .btn-reset:hover { border-color: var(--danger); color: var(--danger); background: #FEF2F2; }
+
+    .status-badge {
+      display: flex; align-items: center; gap: 4px; color: var(--success);
+      font-weight: 600; font-size: 14px; background: #E6F4EA; padding: 9px 16px; border-radius: 8px;
+    }
+
+    /* 모달창 반응형 레이아웃 */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px);
+      display: none; justify-content: center; align-items: center; z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--card-bg); width: 85%; max-width: 540px;
+      border-radius: 20px; padding: 35px 24px; text-align: center; position: relative;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .close-btn { position: absolute; top: 20px; right: 20px; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+    .modal-header-tag { color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 16px; }
+
+    .display-box {
+      background: var(--bg-color); border-radius: 12px; padding: 30px 20px;
+      font-size: 22px; font-weight: 600; margin-bottom: 24px; word-break: keep-all;
+    }
+    
+    .translation-box {
+      font-size: 18px; color: #4B5563; margin-top: 16px; font-weight: 500;
+      border-top: 1px dashed var(--border); padding-top: 16px; display: none;
+    }
+
+    .action-group { display: flex; gap: 10px; justify-content: center; }
+    .feedback-area { margin-top: 24px; font-size: 16px; font-weight: 600; color: var(--text-muted); min-height: 50px; line-height: 1.6; }
+    .loading-spinner { font-size: 18px; color: var(--text-muted); text-align: center; margin-top: 60px; font-weight: 500; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="dashboard-header">
+      <div class="dashboard-title">
+        <h1>통문장 1800 파트너</h1>
+        <p>매일매일 영어가 입에서 술술 터져요!</p>
+      </div>
+      <div class="stats-container">
+        <div class="stat-box">
+          <div class="stat-label">🔥 연속 학습</div>
+          <div class="stat-value" id="streak-text">- 일째</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">📈 나의 진도율</div>
+          <div class="stat-value" id="progress-text">-%</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading" class="loading-spinner">구글 시트에서 영어 문장을 가져오고 있어요... 🚀</div>
+    
+    <div class="sentence-grid" id="list-container"></div>
+  </div>
+
+  <div class="modal-overlay" id="sentence-modal">
+    <div class="modal-content">
+      <div class="close-btn" onclick="closeModal()">✕</div>
+      <div class="modal-header-tag" id="modal-day">DAY 1</div>
+      
+      <div class="display-box" id="modal-display">
+        <div id="eng-text">English Sentence</div>
+        <div class="translation-box" id="kor-text">한국어 해석 내용</div>
+      </div>
+      
+      <div class="action-group" id="group-view">
+        <button class="btn" onclick="speakSentence()">🔊 듣기</button>
+        <button class="btn" onclick="toggleTranslation()">🇰🇷 해석</button>
+      </div>
+      
+      <div class="action-group" id="group-record" style="display: none;">
+        <button class="btn btn-primary" id="record-start-btn" onclick="startRecording()">🎤 외우기 녹음 시작</button>
+      </div>
+      
+      <div class="feedback-area" id="feedback-msg"></div>
+    </div>
+  </div>
+
+  <script>
+    // 전달해주신 영어 전용 최신 웹앱 URL 연동 완료
+    const API_URL = 'https://script.google.com/macros/s/AKfycbFrOigf8yhjtN28mOHEdmZ3vXfjpoJ4q8pdkME9i_OS9px2Cxwo6aJWjH6p7VHee_l/exec';
+    
+    let sentencesData = [];
+    let currentSentence = null;
+    let recognition;
+
+    // 아이 맞춤형 다정한 파트너 칭찬 피드백 멘트
+    const cheers = [
+      "Excellent! 오늘 문장도 완벽하게 머릿속에 저장 완료! 🌟",
+      "와, 발음이 정말 원어민 같았어! 진짜 멋지다! 🎉",
+      "대단해! 매일 성장하는 네 모습이 너무 자랑스러워! 🥳",
+      "자신감 넘치는 목소리 최고! 오늘도 미션 대성공이야! ❤️"
+    ];
+
+    async function loadData() {
+      try {
+        const response = await fetch(API_URL);
+        sentencesData = await response.json();
+        document.getElementById('loading').style.display = 'none';
+        init();
+      } catch (error) {
+        document.getElementById('loading').innerText = '데이터를 불러오지 못했습니다. 앱스크립트 배포 상태를 확인해주세요.';
+        print(error);
+      }
+    }
+
+    function init() {
+      renderList();
+      updateStats();
+      setupSpeechRecognition();
+    }
+
+    function renderList() {
+      const container = document.getElementById('list-container');
+      container.innerHTML = '';
+      
+      sentencesData.forEach(sentence => {
+        const card = document.createElement('div');
+        card.className = 'sentence-card';
+        card.innerHTML = `
+          <div class="sentence-info">
+            <div class="day-tag">${sentence.day}</div>
+            <div class="ref-text">초등 통문장 1단계</div>
+          </div>
+          <div class="list-btn-group">
+            <button class="btn" onclick="openModal(${sentence.id}, 'view')">📖 문장보기</button>
+            ${sentence.isCompleted 
+              ? `<div class="status-badge">✓ 완료</div>
+                 <button class="btn btn-reset" onclick="updateStatus(${sentence.id}, 'reset')" title="기록 초기화">🔄</button>` 
+              : `<button class="btn btn-primary" onclick="openModal(${sentence.id}, 'record')">🎤 문장 외우기</button>`}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function openModal(id, mode) {
+      currentSentence = sentencesData.find(s => s.id === id);
+      document.getElementById('modal-day').innerText = currentSentence.day.toUpperCase();
+      
+      const displayBox = document.getElementById('modal-display');
+      const engBox = document.getElementById('eng-text');
+      const korBox = document.getElementById('kor-text');
+      const viewGroup = document.getElementById('group-view');
+      const recordGroup = document.getElementById('group-record');
+      const feedbackMsg = document.getElementById('feedback-msg');
+
+      feedbackMsg.innerText = "";
+      korBox.style.display = 'none'; 
+
+      if (mode === 'view') {
+        displayBox.style.display = 'block';
+        engBox.innerText = currentSentence.english;
+        korBox.innerText = currentSentence.korean;
+        viewGroup.style.display = 'flex';
+        recordGroup.style.display = 'none';
+      } else if (mode === 'record') {
+        displayBox.style.display = 'none';
+        viewGroup.style.display = 'none';
+        recordGroup.style.display = 'flex';
+        feedbackMsg.innerText = "눈을 감고 문장을 마음속으로 준비한 뒤\n[외우기 녹음 시작] 버튼을 누르고 말해보세요! 💬";
+      }
+
+      document.getElementById('sentence-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('sentence-modal').style.display = 'none';
+      if(recognition) recognition.stop();
+      if('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+
+    function toggleTranslation() {
+      const korBox = document.getElementById('kor-text');
+      korBox.style.display = korBox.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // TTS 기기 음성 출력 기능 (영문 전용)
+    function speakSentence() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); 
+        const utterance = new SpeechSynthesisUtterance(currentSentence.english);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.85; // 아이들이 따라하기 가장 좋은 약간 느린 속도
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("현재 사용 중인 브라우저 환경에서는 원어민 듣기 기능을 지원하지 않습니다.");
+      }
+    }
+
+    function setupSpeechRecognition() {
+      window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!window.SpeechRecognition) return;
+      
+      recognition = new SpeechRecognition();
+      recognition.interimResults = false;
+      recognition.lang = 'en-US'; // 영어 발음 채점용 세팅
+
+      recognition.onresult = function(event) {
+        const spokenText = event.results[0][0].transcript;
+        document.getElementById('feedback-msg').style.color = "var(--text-main)";
+        document.getElementById('feedback-msg').innerText = "내가 말한 발음:\n\"" + spokenText + "\"";
+        checkAccuracy(spokenText);
+      };
+      
+      recognition.onerror = function() {
+        document.getElementById('feedback-msg').innerText = "목소리가 잘 안 들렸어요. 다시 버튼을 누르고 자신 있게 말해볼까요? 👂";
+      };
+    }
+
+    function startRecording() {
+      document.getElementById('feedback-msg').innerText = "귀 쫑긋! 원어민처럼 귀 기울여 듣고 있어요... 🎙️";
+      recognition.start();
+    }
+
+    function checkAccuracy(spokenText) {
+      const targetText = currentSentence.english.toLowerCase();
+      const cleanSpoken = spokenText.toLowerCase().replace(/[.,!?]/g, '').split(' ');
+      const cleanTarget = targetText.replace(/[.,!?]/g, '').split(' ');
+      
+      let matchCount = 0;
+      cleanTarget.forEach(word => {
+        if(cleanSpoken.includes(word)) matchCount++;
+      });
+      
+      const accuracy = (matchCount / cleanTarget.length) * 100;
+      
+      if(accuracy >= 80) {
+        updateStatus(currentSentence.id, 'complete');
+      } else {
+        document.getElementById('feedback-msg').style.color = "var(--danger)";
+        document.getElementById('feedback-msg').innerText += `\n\n(정확도 ${Math.round(accuracy)}%) 단어가 조금 틀렸거나 발음이 흐려졌나 봐요. 조금만 더 또박또박 도전해 봐요!`;
+      }
+    }
+
+    // 서버(구글 시트) 완료 및 리셋 데이터 연동 처리 함수
+    async function updateStatus(id, action) {
+      const target = sentencesData.find(s => s.id === id);
+      
+      if (action === 'complete') {
+        document.getElementById('feedback-msg').innerText = "정말 잘했어! 기록을 안전하게 저장하고 있어요... 💾";
+        confetti({ particleCount: 120, spread: 65, origin: { y: 0.6 } });
+        
+        target.isCompleted = true;
+        target.lastStudyDate = new Date().toISOString();
+        
+        setTimeout(() => {
+          closeModal();
+          renderList();
+          updateStats();
+        }, 3200);
+        
+      } else if (action === 'reset') {
+        if(!confirm(`${target.day} 카드의 완료 체크 표시를 지우고 처음부터 다시 공부할까요?`)) return;
+        target.isCompleted = false;
+        target.lastStudyDate = null;
+        renderList();
+        updateStats();
+      }
+      
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id, action: action })
+        });
+      } catch (error) {
+        console.error("구글 시트 동기화 실패:", error);
+      }
+    }
+
+    // 수행 날짜 기준 연속 학습 카운트 산출 알고리즘
+    function updateStats() {
+      const completedList = sentencesData.filter(s => s.isCompleted);
+      
+      // 1. 전체 진도율 산출
+      const progress = sentencesData.length ? Math.round((completedList.length / sentencesData.length) * 100) : 0;
+      document.getElementById('progress-text').innerText = `${progress}%`;
+      
+      // 2. 동적 Streak 계산
+      if (completedList.length === 0) {
+        document.getElementById('streak-text').innerText = '0일째';
+        return;
+      }
+
+      const studyDates = completedList
+        .filter(s => s.lastStudyDate)
+        .map(s => {
+          const d = new Date(s.lastStudyDate);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        });
+      
+      const uniqueDates = Array.from(new Set(studyDates)).sort().reverse();
+      
+      if (uniqueDates.length === 0) {
+        document.getElementById('streak-text').innerText = '1일째';
+        return;
+      }
+
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+      if (uniqueDates[0] !== todayStr && uniqueDates[0] !== yesterdayStr) {
+        document.getElementById('streak-text').innerText = '0일째';
+        return;
+      }
+
+      let streak = 0;
+      let checkDate = uniqueDates[0] === todayStr ? today : yesterday;
+
+      while (true) {
+        const checkStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
+        if (uniqueDates.includes(checkStr)) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      document.getElementById('streak-text').innerText = `${streak}일째`;
+    }
+
+    window.onload = loadData;
+  </script>
+</body>
+</html>
